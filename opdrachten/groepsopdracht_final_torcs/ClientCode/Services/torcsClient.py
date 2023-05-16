@@ -1,7 +1,7 @@
-import enum
-import socket
+import enum, socket, json
+from Dto.carStateDto import CarStateDto
 
-from command import Command
+from Dto.commandDto import CommandDto
 
 # special messages from server:
 MSG_IDENTIFIED = b'***identified***'
@@ -12,8 +12,7 @@ MSG_RESTART = b'***restart***'
 TO_SOCKET_SEC = 1
 TO_SOCKET_MSEC = TO_SOCKET_SEC * 1000
 
-
-class Client:
+class TorcsClient:
     """Client for TORCS racing car simulation with SCRC network server.
 
     Attributes:
@@ -111,19 +110,17 @@ class Client:
             buffer, _ = self.socket.recvfrom(TO_SOCKET_MSEC)
             if not buffer:
                 return
-
             elif MSG_SHUTDOWN in buffer:
                 print('Server requested shutdown.')
                 self.stop()
-
             elif MSG_RESTART in buffer:
                 print('Server requested restart of driver.')
-
             else:
                 sensor_dict = self.serializer.decode(buffer)
-                print(sensor_dict)
+                carState = CarStateDto(sensor_dict)
+                print(carState)
 
-                command = Command()
+                command = CommandDto()
                 command.gear = 1
                 command.accelerator = 1
                 command.steering = -1
@@ -138,23 +135,13 @@ class Client:
             print('User requested shutdown.')
             self.stop()
 
-
 class State(enum.Enum):
-    """The runtime state of the racing client."""
-
-    # not connected to a racing server
     STOPPED = 1,
-    # entering cyclic execution
     STARTING = 2,
-    # connected to racing server and evaluating driver logic
     RUNNING = 3,
-    # exiting cyclic execution loop
     STOPPING = 4,
 
-
 class Serializer:
-    """Serializer for racing data dirctionary."""
-
     @staticmethod
     def encode(data, *, prefix=None):
         """Encodes data in given dictionary.
@@ -167,7 +154,6 @@ class Serializer:
         Returns:
             Bytes to be sent over the wire.
         """
-
         elements = []
 
         if prefix:

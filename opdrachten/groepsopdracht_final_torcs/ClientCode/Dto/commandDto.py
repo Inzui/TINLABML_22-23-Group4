@@ -3,7 +3,7 @@ import math
 DEGREE_PER_RADIANS = 180 / math.pi
 MPS_PER_KMH = 1000 / 3600
 
-class Command():
+class CommandDto():
     def __init__(self):
         self.accelerator = 0.0
         self.brake = 0.0

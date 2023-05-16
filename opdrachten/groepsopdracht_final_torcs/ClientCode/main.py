@@ -1,7 +1,7 @@
-from protocol import Client
+from Services.torcsClient import TorcsClient
 
 def main():
-    client = Client()
+    client = TorcsClient()
     client.run()
 
 if __name__ == '__main__':
