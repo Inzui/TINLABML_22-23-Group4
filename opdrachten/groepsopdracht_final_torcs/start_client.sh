@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-$HOME/torcs/scr-client-cpp/client
+python3 /vagrant/ClientCode/main.py
