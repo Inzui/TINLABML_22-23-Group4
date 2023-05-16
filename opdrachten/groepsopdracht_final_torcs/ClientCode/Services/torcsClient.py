@@ -1,12 +1,11 @@
-import enum, socket, json
+import enum, socket
 from Dto.carStateDto import CarStateDto
-
 from Dto.commandDto import CommandDto
 
 # special messages from server:
-MSG_IDENTIFIED = b'***identified***'
-MSG_SHUTDOWN = b'***shutdown***'
-MSG_RESTART = b'***restart***'
+MSG_IDENTIFIED = b"***identified***"
+MSG_SHUTDOWN = b"***shutdown***"
+MSG_RESTART = b"***restart***"
 
 # timeout for socket connection in seconds and msec:
 TO_SOCKET_SEC = 1
@@ -24,46 +23,41 @@ class TorcsClient:
         socket (socket): UDP socket to server.
     """
 
-    def __init__(self, hostname='localhost', port=3001, *, serializer=None):
+    def __init__(self, hostname="localhost", port=3001):
         self.hostaddr = (hostname, port)
-        self.serializer = serializer or Serializer()
+        self.serializer = Serializer()
         self.state = State.STOPPED
         self.socket = None
-
-    def __repr__(self):
-        return '{s.__class__.__name__}({s.hostaddr!r}) -- {s.state.name}' \
-            ''.format(s=self)
 
     def run(self):
         """Enters cyclic execution of the client network interface."""
 
         if self.state is State.STOPPED:
-            print('Starting cyclic execution.')
+            print("Starting cyclic execution.")
 
             self.state = State.STARTING
 
             try:
-                print('Registering driver client with server {}.'
-                             .format(self.hostaddr))
+                print(f"Registering driver client with server {self.hostaddr}.")
                 self._configure_udp_socket()
                 self._register_driver()
                 self.state = State.RUNNING
-                print('Connection successful.')
+                print("Connection successful.")
 
             except socket.error as ex:
-                print('Cannot connect to server: {}'.format(ex))
+                print(f"Cannot connect to server: {ex}")
                 self.state = State.STOPPED
 
         while self.state is State.RUNNING:
             self._process_server_msg()
 
-        print('Client stopped.')
+        print("Client stopped.")
         self.state = State.STOPPED
 
     def stop(self):
         """Exits cyclic client execution (asynchronously)."""
         if self.state is State.RUNNING:
-            print('Disconnecting from racing server.')
+            print("Disconnecting from racing server.")
             self.state = State.STOPPING
 
     def _configure_udp_socket(self):
@@ -72,38 +66,35 @@ class TorcsClient:
 
     def _register_driver(self):
         """
-        Sends driver's initialization data to server and waits for acceptance
+        Sends driver"s initialization data to server and waits for acceptance
         response.
         """
 
         angles = -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
-        assert len(angles) == 19, \
-            'Inconsistent length {} of range of finder iterable.'.format(
-                len(angles)
-            )
+        assert len(angles) == 19, f"Inconsistent length {len(angles)} of range of finder iterable."
 
-        data = {'init': angles}
+        data = {"init": angles}
         buffer = self.serializer.encode(
             data,
-            prefix='SCR-{}'.format(self.hostaddr[1])
+            prefix = f"SCR-{self.hostaddr[1]}"
         )
 
-        print('Registering client.')
+        print("Registering client.")
 
         connected = False
         while not connected and self.state is not State.STOPPING:
             try:
-                print('Sending init buffer {!r}.'.format(buffer))
+                print(f"Sending init buffer {buffer}.")
                 self.socket.sendto(buffer, self.hostaddr)
 
                 buffer, _ = self.socket.recvfrom(TO_SOCKET_MSEC)
-                print('Received buffer {!r}.'.format(buffer))
+                print(f"Received buffer {buffer}.")
                 if MSG_IDENTIFIED in buffer:
-                    print('Server accepted connection.')
+                    print("Server accepted connection.")
                     connected = True
 
             except socket.error as ex:
-                print('No connection to server yet ({}).'.format(ex))
+                print(f"No connection to server yet ({ex}).")
 
     def _process_server_msg(self):
         try:
@@ -111,10 +102,10 @@ class TorcsClient:
             if not buffer:
                 return
             elif MSG_SHUTDOWN in buffer:
-                print('Server requested shutdown.')
+                print("Server requested shutdown.")
                 self.stop()
             elif MSG_RESTART in buffer:
-                print('Server requested restart of driver.')
+                print("Server requested restart of driver.")
             else:
                 sensor_dict = self.serializer.decode(buffer)
                 carState = CarStateDto(sensor_dict)
@@ -129,10 +120,10 @@ class TorcsClient:
                 self.socket.sendto(buffer, self.hostaddr)
 
         except socket.error as ex:
-            print('Communication with server failed: {}.'.format(ex))
+            print(f"Communication with server failed: {ex}.")
 
         except KeyboardInterrupt:
-            print('User requested shutdown.')
+            print("User requested shutdown.")
             self.stop()
 
 class State(enum.Enum):
@@ -164,9 +155,9 @@ class Serializer:
                 # string version of number array:
                 vstr = map(lambda i: str(i), v)
 
-                elements.append('({} {})'.format(k, ' '.join(vstr)))
+                elements.append("({} {})".format(k, " ".join(vstr)))
 
-        return ''.join(elements).encode()
+        return "".join(elements).encode()
 
     @staticmethod
     def decode(buff):
@@ -179,24 +170,19 @@ class Serializer:
 
         pos = 0
         while len(s) > pos:
-            start = s.find('(', pos)
+            start = s.find("(", pos)
             if start < 0:
                 # end of list:
                 break
 
-            end = s.find(')', start + 1)
+            end = s.find(")", start + 1)
             if end < 0:
-                print('Opening brace at position {} not matched in '
-                                'buffer {!r}.'.format(start, buff))
+                print(f"Opening brace at position {start} not matched in buffer {buff}.")
                 break
 
-            items = s[start + 1:end].split(' ')
+            items = s[start + 1:end].split(" ")
             if len(items) < 2:
-                print(
-                    'Buffer {!r} not holding proper key value pair.'.format(
-                        buff
-                    )
-                )
+                print(f"Buffer {buff} not holding proper key value pair.")
             else:
                 key = items[0]
                 if len(items) == 2:
