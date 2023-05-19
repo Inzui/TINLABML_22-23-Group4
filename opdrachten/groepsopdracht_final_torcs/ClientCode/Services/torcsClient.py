@@ -121,7 +121,7 @@ class TorcsClient:
                 carState = CarStateDto(sensor_dict)
                 print(carState)
 
-                logger.info(carState)
+                logger.info(carState.getJSON())
 
                 command = CommandDto()
                 command.gear = 1
