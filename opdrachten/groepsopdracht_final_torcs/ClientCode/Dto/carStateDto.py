@@ -1,3 +1,5 @@
+import json
+
 class CarStateDto():
     def __init__(self, carStateDict):
         for key in carStateDict:
@@ -8,3 +10,6 @@ class CarStateDto():
         for attr, value in self.__dict__.items():
             outputString += f"{attr, value}\n"
         return outputString
+    
+    def getJSON(self):
+        return json.dumps(self.__dict__)

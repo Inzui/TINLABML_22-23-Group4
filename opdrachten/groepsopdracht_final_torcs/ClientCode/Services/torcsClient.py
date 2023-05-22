@@ -1,6 +1,16 @@
 import enum, socket
+import logging
+import os
+import time
 from Dto.carStateDto import CarStateDto
 from Dto.commandDto import CommandDto
+
+
+#logging parameters
+logging.basicConfig(filename=f"../../home/vagrant/Documents/Logs/Race Log - {time.ctime(time.time())}.log", 
+                    level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', 
+                    datefmt='%Y-%m-%d %H:%M:%S')
+logger = logging.getLogger(__name__)
 
 # special messages from server:
 MSG_IDENTIFIED = b"***identified***"
@@ -110,6 +120,8 @@ class TorcsClient:
                 sensor_dict = self.serializer.decode(buffer)
                 carState = CarStateDto(sensor_dict)
                 print(carState)
+
+                logger.info(carState.getJSON())
 
                 command = CommandDto()
                 command.gear = 1
