@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-date > ../../logs/torcs_server.log; torcs >> ../../logs/torcs_server.log
+date > /vagrant/Logs/torcs_server.log; torcs >> /vagrant/Logs/torcs_server.log

@@ -1,3 +1,3 @@
 #/usr/bin/env bash
 
-(cd /home/vagrant/MultiAgentTORCS; python playGame_DDPG.py 3001)
+(cd /vagrant/torcs-ai_client_examples/MultiAgentTORCS; python3 playGame_DDPG.py 3001)

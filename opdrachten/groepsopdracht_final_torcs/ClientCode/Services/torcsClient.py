@@ -7,7 +7,10 @@ from Dto.commandDto import CommandDto
 
 
 #logging parameters
-logging.basicConfig(filename=f"../../home/vagrant/Documents/Logs/Race Log - {time.ctime(time.time())}.log", 
+LOG_PATH = "../../home/vagrant/Documents/Logs"
+if (not os.path.exists(LOG_PATH)):
+    os.mkdir(LOG_PATH)
+logging.basicConfig(filename=os.path.join(LOG_PATH, f"Race Log - {time.ctime(time.time())}.log"), 
                     level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', 
                     datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
