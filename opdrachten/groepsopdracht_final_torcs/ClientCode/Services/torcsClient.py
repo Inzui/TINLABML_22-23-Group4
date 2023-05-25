@@ -2,6 +2,7 @@ import enum, socket
 import logging
 import os
 import time
+import json
 from Dto.carStateDto import CarStateDto
 from Dto.commandDto import CommandDto
 
@@ -124,7 +125,9 @@ class TorcsClient:
                 carState = CarStateDto(sensor_dict)
                 print(carState)
 
-                logger.info(carState.getJSON())
+                data = carState.getDict()
+                self._preprocessing(data)
+                logger.info(json.dumps(data))
 
                 command = CommandDto()
                 command.gear = 1
@@ -140,6 +143,13 @@ class TorcsClient:
         except KeyboardInterrupt:
             print("User requested shutdown.")
             self.stop()
+
+    def _preprocessing(self, data):
+        #Possibly other things: angle, gear, rpm, wheelSpinVel, speedGlobalX, speedGlobalY
+        uselessData = ["damage", "fuel", "focus", "roll", "pitch", "yaw"]
+        for dataKey in uselessData:
+            data.pop(dataKey)
+
 
 class State(enum.Enum):
     STOPPED = 1,
