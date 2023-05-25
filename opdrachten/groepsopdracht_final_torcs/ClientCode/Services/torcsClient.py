@@ -84,10 +84,10 @@ class TorcsClient:
         response.
         """
 
-        angles = -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
-        assert len(angles) == 19, f"Inconsistent length {len(angles)} of range of finder iterable."
+        self.angles = -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
+        assert len(self.angles) == 19, f"Inconsistent length {len(self.angles)} of range of finder iterable."
 
-        data = {"init": angles}
+        data = {"init": self.angles}
         buffer = self.serializer.encode(
             data,
             prefix = f"SCR-{self.hostaddr[1]}"
@@ -145,10 +145,35 @@ class TorcsClient:
             self.stop()
 
     def _preprocessing(self, data):
+        #Cleaning
         #Possibly other things: angle, gear, rpm, wheelSpinVel, speedGlobalX, speedGlobalY
         uselessData = ["damage", "fuel", "focus", "roll", "pitch", "yaw"]
         for dataKey in uselessData:
             data.pop(dataKey)
+
+        #Normalization
+        #Speed to one vector
+        speedX = data.pop("speedX")
+        speedY = data.pop("speedY")
+        speedZ = data.pop("speedZ")
+        speed = {"speed" : (speedX, speedY, speedZ)}
+        data.update(speed)
+
+        #Location to one vector
+        x = data.pop("x")
+        y = data.pop("y")
+        z = data.pop("z")
+        location = {"location" : (x, y, z)}
+        data.update(location)
+
+        #Remove unnecassary opponent info
+        opponents = data.pop("opponents")
+        opponentsDict = {}
+        for i in range(len(opponents)):
+            if(opponents[i] != "200"):
+                opponentsDict.update({i*10 : opponents[i]})
+        data.update({"opponents": opponentsDict})
+
 
 
 class State(enum.Enum):
