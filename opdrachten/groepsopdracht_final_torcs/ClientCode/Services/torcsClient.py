@@ -6,7 +6,8 @@ import json
 # import panda as pd
 from Dto.carStateDto import CarStateDto
 from Dto.commandDto import CommandDto
-
+from Drivers.driverInterface import *
+from Drivers.dumbDriver import *
 
 #logging parameters
 LOG_PATH = "../../home/vagrant/Documents/Logs"
@@ -38,11 +39,12 @@ class TorcsClient:
         socket (socket): UDP socket to server.
     """
 
-    def __init__(self, hostname="localhost", port=3001):
+    def __init__(self, driver: DriverInterface = DumbDriver(), hostname="localhost", port = 3001):
         self.hostaddr = (hostname, port)
         self.serializer = Serializer()
         self.state = State.STOPPED
         self.socket = None
+        self.driver = driver
 
     def run(self):
         """Enters cyclic execution of the client network interface."""
@@ -133,10 +135,7 @@ class TorcsClient:
 
                 logger.info(json.dumps(data))
 
-                command = CommandDto()
-                command.gear = 1
-                command.accelerator = 1
-                command.steering = -1
+                command = self.driver.drive(data)
 
                 buffer = self.serializer.encode(command.actuator_dict)
                 self.socket.sendto(buffer, self.hostaddr)
@@ -151,7 +150,7 @@ class TorcsClient:
     def _preprocessing(self, data):
         #Cleaning
         #Possibly other things: angle
-        uselessData = ["damage", "fuel", "focus", "roll", "pitch", "yaw", "speedGlobalX", "speedGlobalY", "gear", "rpm", "wheelSpinVel"]
+        uselessData = ["damage", "fuel", "focus", "roll", "pitch", "yaw", "speedGlobalX", "speedGlobalY", "gear", "wheelSpinVel"]
         for dataKey in uselessData:
             data.pop(dataKey)
 
