@@ -3,6 +3,7 @@ import logging
 import os
 import time
 import json
+# import panda as pd
 from Dto.carStateDto import CarStateDto
 from Dto.commandDto import CommandDto
 
@@ -127,6 +128,9 @@ class TorcsClient:
 
                 data = carState.getDict()
                 self._preprocessing(data)
+    	        
+                # dataFrame = pd.DataFrame(data)
+
                 logger.info(json.dumps(data))
 
                 command = CommandDto()
