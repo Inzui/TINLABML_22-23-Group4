@@ -11,5 +11,8 @@ class CarStateDto():
             outputString += f"{attr, value}\n"
         return outputString
     
+    def getDict(self):
+        return self.__dict__
+    
     def getJSON(self):
         return json.dumps(self.__dict__)
