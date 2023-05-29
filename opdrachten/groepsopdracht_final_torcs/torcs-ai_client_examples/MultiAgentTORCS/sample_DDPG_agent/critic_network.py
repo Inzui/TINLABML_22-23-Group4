@@ -1,8 +1,10 @@
 
-import tensorflow as tf 
+#import tensorflow as tf 
 import numpy as np
 import math
 
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 
 LAYER1_SIZE = 300
 LAYER2_SIZE = 600

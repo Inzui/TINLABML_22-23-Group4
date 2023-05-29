@@ -6,7 +6,7 @@
 # -----------------------------------
 
 import gym
-import tensorflow as tf
+#import tensorflow as tf
 import numpy as np
 from OU import OU
 import math, random
@@ -15,6 +15,8 @@ from actor_network import ActorNetwork
 from ReplayBuffer import ReplayBuffer
 from configurations import save_location
 
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 
 # Hyper Parameters:
 

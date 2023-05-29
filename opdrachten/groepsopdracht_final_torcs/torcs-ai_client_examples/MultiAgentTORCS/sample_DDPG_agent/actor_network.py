@@ -1,7 +1,9 @@
-import tensorflow as tf 
+#import tensorflow as tf 
 import numpy as np
 import math
 
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 
 # Hyper Parameters
 LAYER1_SIZE = 300

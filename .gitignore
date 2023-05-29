@@ -137,3 +137,5 @@ vagrant/.vagrant/
 .vagrant
 opdrachten/groepsopdracht_final_torcs/AlxcNL/torcs-server.box
 tinlab/
+opdrachten/groepsopdracht_final_torcs/TestCode/testML.py
+opdrachten/groepsopdracht_final_torcs/TestCode/forza_2023-05-19.csv
