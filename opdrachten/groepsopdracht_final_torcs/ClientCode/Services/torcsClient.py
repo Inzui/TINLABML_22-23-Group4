@@ -171,6 +171,7 @@ class TorcsClient:
         opponentsDict = {}
         for i in range(len(opponents)):
             if(opponents[i] != "200"):
+                #Add dict, where {key = angle : value = distance} (0 degrees is the rear of the car)
                 opponentsDict.update({i*10 : opponents[i]})
         data.update({"opponents": opponentsDict})
 
