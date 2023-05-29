@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-python3 ClientCode/main.py
+python3 /vagrant/ClientCode/main.py

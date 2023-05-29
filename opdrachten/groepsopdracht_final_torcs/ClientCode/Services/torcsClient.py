@@ -3,7 +3,8 @@ import logging
 import os
 import time
 import json
-# import panda as pd
+import pandas as pd
+import numpy as np
 from Dto.carStateDto import CarStateDto
 from Dto.commandDto import CommandDto
 
@@ -38,11 +39,12 @@ class TorcsClient:
         socket (socket): UDP socket to server.
     """
 
-    def __init__(self, hostname="localhost", port=3001):
+    def __init__(self, regr, hostname="localhost", port=3001):
         self.hostaddr = (hostname, port)
         self.serializer = Serializer()
         self.state = State.STOPPED
         self.socket = None
+        self.regr = regr
 
     def run(self):
         """Enters cyclic execution of the client network interface."""
@@ -129,14 +131,20 @@ class TorcsClient:
                 data = carState.getDict()
                 self._preprocessing(data)
     	        
-                # dataFrame = pd.DataFrame(data)
+                print(data)
+                # df = pd.DataFrame(data)
+                # print(df.head())
 
+                arr = np.array([data['speed'][0], data['speed'][1], data["speed"][2], data["angle"], data["location"][2], data["trackPos"], data["distFromStart"]]).astype(float)
+                print (arr)
                 logger.info(json.dumps(data))
-
+                
+                action = self.regr.predict([arr])
+                print(action)
                 command = CommandDto()
                 command.gear = 1
-                command.accelerator = 1
-                command.steering = -1
+                command.accelerator = action[0][0] if float(data["distFromStart"]) < 3200 else 1
+                command.steering = action[0][1]
 
                 buffer = self.serializer.encode(command.actuator_dict)
                 self.socket.sendto(buffer, self.hostaddr)
