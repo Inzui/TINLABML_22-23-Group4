@@ -146,8 +146,8 @@ class TorcsClient:
 
     def _preprocessing(self, data):
         #Cleaning
-        #Possibly other things: angle, gear, rpm, wheelSpinVel, speedGlobalX, speedGlobalY
-        uselessData = ["damage", "fuel", "focus", "roll", "pitch", "yaw"]
+        #Possibly other things: angle
+        uselessData = ["damage", "fuel", "focus", "roll", "pitch", "yaw", "speedGlobalX", "speedGlobalY", "gear", "rpm", "wheelSpinVel"]
         for dataKey in uselessData:
             data.pop(dataKey)
 
