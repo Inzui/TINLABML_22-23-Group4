@@ -39,12 +39,11 @@ class TorcsClient:
         socket (socket): UDP socket to server.
     """
 
-    def __init__(self, regr, hostname="localhost", port=3001):
+    def __init__(self, hostname="localhost", port=3001):
         self.hostaddr = (hostname, port)
         self.serializer = Serializer()
         self.state = State.STOPPED
         self.socket = None
-        self.regr = regr
         self.dataFrame = pd.DataFrame()
 
     def run(self):
@@ -139,7 +138,6 @@ class TorcsClient:
                 print (arr)
                 logger.info(json.dumps(data))
                 
-                action = self.regr.predict([arr])
                 print(action)
                 command = CommandDto()
                 command.gear = 1
@@ -211,10 +209,6 @@ class TorcsClient:
             elif(isinstance(data[key], list)):
                 floatList = [float(x) for x in data[key]]
                 data.update({key: tuple(floatList)})
-
-
-
-
 
 class State(enum.Enum):
     STOPPED = 1,
