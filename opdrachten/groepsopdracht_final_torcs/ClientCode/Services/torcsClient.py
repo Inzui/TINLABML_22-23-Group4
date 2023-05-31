@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from Dto.carStateDto import CarStateDto
 from Dto.commandDto import CommandDto
+from Services.machineLearning.machineLearning import MachineLearning
 
 
 #logging parameters
@@ -39,13 +40,13 @@ class TorcsClient:
         socket (socket): UDP socket to server.
     """
 
-    def __init__(self, regr, hostname="localhost", port=3001):
+    def __init__(self, hostname="localhost", port=3001):
         self.hostaddr = (hostname, port)
         self.serializer = Serializer()
         self.state = State.STOPPED
         self.socket = None
-        self.regr = regr
         self.dataFrame = pd.DataFrame()
+        self.regressor = MachineLearning()
 
     def run(self):
         """Enters cyclic execution of the client network interface."""
@@ -135,20 +136,28 @@ class TorcsClient:
                 self.printAllData(data)
                 self._updateDataFrame(data)
 
-                arr = np.array([data['speed'][0], data['speed'][1], data["speed"][2], data["angle"], data["location"][2], data["trackPos"], data["distFromStart"]]).astype(float)
+                arr = np.array([data['speed'][0], data['speed'][1], data["speed"][2], data["angle"], data["location"][2],
+                                 data["trackPos"], data["distFromStart"]]).astype(float)
                 print (arr)
                 logger.info(json.dumps(data))
                 
-                action = self.regr.predict([arr])
+
+                action = self.regressor.predict([arr])
                 print(action)
                 command = CommandDto()
+<<<<<<< HEAD
 
                 #implemented automatic gear, from 50 it shifts up every 30 km/h faster, 
                 #when using it right now, the car starts to wobble and crashes.
                 #command.gear = self.getGear(data['speed'][0])
                 command.gear = 1
                 command.accelerator = action[0][0] if float(data["distFromStart"]) < 3200 else 1
+=======
+                command.accelerator = action[0][0]
+>>>>>>> 247c3ca5950fd30116110c8ba086a61718d688be
                 command.steering = action[0][1]
+                command.brake = action[0][2]
+                command.gear = 1
 
                 buffer = self.serializer.encode(command.actuator_dict)
                 self.socket.sendto(buffer, self.hostaddr)
@@ -187,7 +196,9 @@ class TorcsClient:
     def _preprocessing(self, data):
         #Cleaning
         #Possibly other things: angle
-        uselessData = ["damage", "fuel", "focus", "roll", "pitch", "yaw", "speedGlobalX", "speedGlobalY", "gear", "rpm", "wheelSpinVel"]
+        #uselessData = ["damage", "fuel", "focus", "roll", "pitch", "yaw", "speedGlobalX", "speedGlobalY", "gear", "rpm", "wheelSpinVel"]
+        uselessData = ["damage", "fuel", "focus", "roll", "pitch", "yaw", "speedGlobalX", "speedGlobalY", "wheelSpinVel"]
+
         for dataKey in uselessData:
             data.pop(dataKey)
 
@@ -221,10 +232,6 @@ class TorcsClient:
             elif(isinstance(data[key], list)):
                 floatList = [float(x) for x in data[key]]
                 data.update({key: tuple(floatList)})
-
-
-
-
 
 class State(enum.Enum):
     STOPPED = 1,
