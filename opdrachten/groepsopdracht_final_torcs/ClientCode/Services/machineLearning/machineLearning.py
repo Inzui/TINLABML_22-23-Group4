@@ -29,8 +29,8 @@ class MachineLearning:
         return beta
     
     def scikitMLP(self, X, Y):
-        reg = MLPRegressor(hidden_layer_sizes=(10, 10, 10), max_iter=500, activation='relu', solver='adam', random_state=1)
-        reg.fit(X.values, Y.values.flatten())
+        reg = MLPRegressor(hidden_layer_sizes=(50, 50, 50 ), max_iter=500, activation='logistic', solver='adam', random_state=1)
+        reg.fit(X.values, Y.values)
         return reg
 
     def train(self):
@@ -55,11 +55,14 @@ class MachineLearning:
         # regr.fit(X, Y)
 
         beta = self.normalEquation(X, Y)
+        
+        # regr = self.scikitMLP(X, Y)
         return beta
 
     def predict(self, df):
         # return self.regressor.predict(df)
         return np.dot(df, self.regressor)
+        # return self.regressor.predict(df)
 
     def _save(self):
         pickle.dump(self.regressor, open(modelPath, 'wb'))
@@ -75,6 +78,6 @@ class MachineLearning:
     
     def _cleanData(self, df):
         #remove entries where distance raced is 0
-        df = df[df["s_distance_from_start"] != 0]
+        df = df[df["s_speed_x"] >= 0]
         df.reset_index(inplace=True)
         return df

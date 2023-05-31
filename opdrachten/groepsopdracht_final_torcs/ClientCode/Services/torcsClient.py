@@ -136,7 +136,8 @@ class TorcsClient:
                 self.printAllData(data)
                 self._updateDataFrame(data)
 
-                arr = np.array([data['speed'][0], data['speed'][1], data["speed"][2], data["angle"], data["location"][2], data["trackPos"], data["distFromStart"]]).astype(float)
+                arr = np.array([data['speed'][0], data['speed'][1], data["speed"][2], data["angle"], data["location"][2],
+                                 data["trackPos"], data["distFromStart"]]).astype(float)
                 print (arr)
                 logger.info(json.dumps(data))
                 
@@ -147,7 +148,7 @@ class TorcsClient:
                 command.accelerator = action[0][0]
                 command.steering = action[0][1]
                 command.brake = action[0][2]
-                command.gear = action[0][3]
+                command.gear = 1
 
                 buffer = self.serializer.encode(command.actuator_dict)
                 self.socket.sendto(buffer, self.hostaddr)
@@ -180,7 +181,9 @@ class TorcsClient:
     def _preprocessing(self, data):
         #Cleaning
         #Possibly other things: angle
-        uselessData = ["damage", "fuel", "focus", "roll", "pitch", "yaw", "speedGlobalX", "speedGlobalY", "gear", "rpm", "wheelSpinVel"]
+        #uselessData = ["damage", "fuel", "focus", "roll", "pitch", "yaw", "speedGlobalX", "speedGlobalY", "gear", "rpm", "wheelSpinVel"]
+        uselessData = ["damage", "fuel", "focus", "roll", "pitch", "yaw", "speedGlobalX", "speedGlobalY", "wheelSpinVel"]
+
         for dataKey in uselessData:
             data.pop(dataKey)
 
