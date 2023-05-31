@@ -142,6 +142,10 @@ class TorcsClient:
                 action = self.regr.predict([arr])
                 print(action)
                 command = CommandDto()
+
+                #implemented automatic gear, from 50 it shifts up every 30 km/h faster, 
+                #when using it right now, the car starts to wobble and crashes.
+                #command.gear = self.getGear(data['speed'][0])
                 command.gear = 1
                 command.accelerator = action[0][0] if float(data["distFromStart"]) < 3200 else 1
                 command.steering = action[0][1]
@@ -155,6 +159,12 @@ class TorcsClient:
         except KeyboardInterrupt:
             print("User requested shutdown.")
             self.stop()
+
+    def getGear(self, speed):
+        gear = 1
+        if speed > 50:
+            gear = (speed + 10) // 30
+        return gear
 
     def printAllData(self, data):
         [print(key, "->", data[key]) for key in data]
