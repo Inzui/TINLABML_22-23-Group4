@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from Dto.carStateDto import CarStateDto
 from Dto.commandDto import CommandDto
+from Services.machineLearning.machineLearning import MachineLearning
 
 
 #logging parameters
@@ -45,6 +46,7 @@ class TorcsClient:
         self.state = State.STOPPED
         self.socket = None
         self.dataFrame = pd.DataFrame()
+        self.regressor = MachineLearning()
 
     def run(self):
         """Enters cyclic execution of the client network interface."""
@@ -138,11 +140,14 @@ class TorcsClient:
                 print (arr)
                 logger.info(json.dumps(data))
                 
+
+                action = self.regressor.predict([arr])
                 print(action)
                 command = CommandDto()
-                command.gear = 1
-                command.accelerator = action[0][0] if float(data["distFromStart"]) < 3200 else 1
+                command.accelerator = action[0][0]
                 command.steering = action[0][1]
+                command.brake = action[0][2]
+                command.gear = action[0][3]
 
                 buffer = self.serializer.encode(command.actuator_dict)
                 self.socket.sendto(buffer, self.hostaddr)
