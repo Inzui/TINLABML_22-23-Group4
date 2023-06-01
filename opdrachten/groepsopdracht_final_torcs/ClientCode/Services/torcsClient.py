@@ -132,36 +132,29 @@ class TorcsClient:
             elif MSG_RESTART in buffer:
                 print("Server requested restart of driver.")
             else:
-                sensor_dict = self.serializer.decode(buffer)
-                carState = CarStateDto(sensor_dict)
-                print(carState)
-
-                data = carState.getDict()
-                self._preprocessing(data)
+                carSensorDict = self.serializer.decode(buffer)
+                self._preprocessing(carSensorDict)
     	        
-                self.printAllData(data)
-                self._updateDataFrame(data)
+                self.printAllData(carSensorDict)
+                self._updateDataFrame(carSensorDict)
 
-                arr = np.array([data['speed'][0], data['speed'][1], data["speed"][2], data["angle"], data["location"][2],
-                                 data["trackPos"], data["distFromStart"]]).astype(float)
-                print (arr)
-                logger.info(json.dumps(data))
+                arr = np.array([carSensorDict['speed'][0], carSensorDict['speed'][1], carSensorDict["speed"][2], carSensorDict["angle"], carSensorDict["location"][2],
+                                 carSensorDict["trackPos"], carSensorDict["distFromStart"]]).astype(float)
+                print(arr)
+                logger.info(json.dumps(carSensorDict))
                 
+                # action = self.regressor.predict([arr])
+                # print(action)
 
-                action = self.regressor.predict([arr])
-                print(action)
-                command = CommandDto()
+                # #implemented automatic gear, from 50 it shifts up every 30 km/h faster, 
+                # #when using it right now, the car starts to wobble and crashes.
+                # #command.gear = self.getGear(data['speed'][0])
+                # command.gear = 1
+                # command.accelerator = action[0][0] if float(data["distFromStart"]) < 3200 else 1
 
-                #implemented automatic gear, from 50 it shifts up every 30 km/h faster, 
-                #when using it right now, the car starts to wobble and crashes.
-                #command.gear = self.getGear(data['speed'][0])
-                command.gear = 1
-                command.accelerator = action[0][0] if float(data["distFromStart"]) < 3200 else 1
-
-                command.steering = action[0][1]
-                command.brake = action[0][2]
-                command = self.driver.drive(data)
-
+                # command.steering = action[0][1]
+                # command.brake = action[0][2]
+                command = self.driver.drive(carSensorDict)
 
                 buffer = self.serializer.encode(command.actuator_dict)
                 self.socket.sendto(buffer, self.hostaddr)
@@ -173,11 +166,11 @@ class TorcsClient:
             print("User requested shutdown.")
             self.stop()
 
-    def getGear(self, speed):
-        gear = 1
-        if speed > 50:
-            gear = (speed + 10) // 30
-        return gear
+    # def getGear(self, speed):
+    #     gear = 1
+    #     if speed > 50:
+    #         gear = (speed + 10) // 30
+    #     return gear
 
     def printAllData(self, data):
         [print(key, "->", data[key]) for key in data]

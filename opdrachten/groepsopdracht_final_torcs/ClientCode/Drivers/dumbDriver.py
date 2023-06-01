@@ -1,5 +1,4 @@
 from Drivers.driverInterface import *
-from Dto.carStateDto import CarStateDto
 from Dto.commandDto import CommandDto
 
 import abc, math
@@ -29,8 +28,8 @@ class DumbDriver(DriverInterface):
 
         command.gear = self.currGear
         
-        if (curLapTime < 10):
-            command.accelerator = 1
+        if (curLapTime < 5):
+            command.accelerator = 0.5
         elif (distFromCorner <= 90 and speed > 90):
             command.brake = distFromCorner / 200 * 1
             command.accelerator = 0

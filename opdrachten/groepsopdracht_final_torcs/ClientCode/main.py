@@ -1,7 +1,4 @@
 from Services.torcsClient import TorcsClient
-import os
-import pandas as pd
-import numpy as np
 
 def main():
     client = TorcsClient()
