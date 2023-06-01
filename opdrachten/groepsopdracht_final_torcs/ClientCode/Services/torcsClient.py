@@ -3,9 +3,13 @@ import logging
 import os
 import time
 import json
-# import panda as pd
+import pandas as pd
+import numpy as np
 from Dto.carStateDto import CarStateDto
 from Dto.commandDto import CommandDto
+
+from Services.machineLearning.machineLearning import MachineLearning
+
 from Drivers.driverInterface import *
 from Drivers.dumbDriver import *
 
@@ -44,7 +48,11 @@ class TorcsClient:
         self.serializer = Serializer()
         self.state = State.STOPPED
         self.socket = None
+        self.dataFrame = pd.DataFrame()
+        self.regressor = MachineLearning()
+
         self.driver = driver
+
 
     def run(self):
         """Enters cyclic execution of the client network interface."""
@@ -131,11 +139,29 @@ class TorcsClient:
                 data = carState.getDict()
                 self._preprocessing(data)
     	        
-                # dataFrame = pd.DataFrame(data)
+                self.printAllData(data)
+                self._updateDataFrame(data)
 
+                arr = np.array([data['speed'][0], data['speed'][1], data["speed"][2], data["angle"], data["location"][2],
+                                 data["trackPos"], data["distFromStart"]]).astype(float)
+                print (arr)
                 logger.info(json.dumps(data))
+                
 
+                action = self.regressor.predict([arr])
+                print(action)
+                command = CommandDto()
+
+                #implemented automatic gear, from 50 it shifts up every 30 km/h faster, 
+                #when using it right now, the car starts to wobble and crashes.
+                #command.gear = self.getGear(data['speed'][0])
+                command.gear = 1
+                command.accelerator = action[0][0] if float(data["distFromStart"]) < 3200 else 1
+
+                command.steering = action[0][1]
+                command.brake = action[0][2]
                 command = self.driver.drive(data)
+
 
                 buffer = self.serializer.encode(command.actuator_dict)
                 self.socket.sendto(buffer, self.hostaddr)
@@ -147,10 +173,35 @@ class TorcsClient:
             print("User requested shutdown.")
             self.stop()
 
+    def getGear(self, speed):
+        gear = 1
+        if speed > 50:
+            gear = (speed + 10) // 30
+        return gear
+
+    def printAllData(self, data):
+        [print(key, "->", data[key]) for key in data]
+
+    def _updateDataFrame(self, data):
+        #If the dataframe hasn't been initialised before, we 
+        #do it here with the column names
+        if self.dataFrame.empty:
+            self.dataFrame = pd.DataFrame(columns=list(data.keys()))
+        
+        index = len(self.dataFrame)
+
+        #We have to add each value individualy using 'at', 
+        #because otherwise panda's won't allow the use of a list
+        #as a single cell value
+        for key in data:
+            self.dataFrame.at[index, key] = data[key]
+        #print(self.dataFrame)
+
     def _preprocessing(self, data):
         #Cleaning
         #Possibly other things: angle
         uselessData = ["damage", "fuel", "focus", "roll", "pitch", "yaw", "speedGlobalX", "speedGlobalY", "gear", "wheelSpinVel"]
+
         for dataKey in uselessData:
             data.pop(dataKey)
 
@@ -159,14 +210,14 @@ class TorcsClient:
         speedX = data.pop("speedX")
         speedY = data.pop("speedY")
         speedZ = data.pop("speedZ")
-        speed = {"speed" : (speedX, speedY, speedZ)}
+        speed = {"speed" : (float(speedX), float(speedY), float(speedZ))}
         data.update(speed)
 
         #Location to one vector
         x = data.pop("x")
         y = data.pop("y")
         z = data.pop("z")
-        location = {"location" : (x, y, z)}
+        location = {"location" : (float(x), float(y), float(z))}
         data.update(location)
 
         #Remove unnecassary opponent info
@@ -175,10 +226,15 @@ class TorcsClient:
         for i in range(len(opponents)):
             if(opponents[i] != "200"):
                 #Add dict, where {key = angle : value = distance} (0 degrees is the rear of the car)
-                opponentsDict.update({i*10 : opponents[i]})
+                opponentsDict.update({i*10 : float(opponents[i])})
         data.update({"opponents": opponentsDict})
 
-
+        for key in data:
+            if(isinstance(data[key], str)):
+                data.update({key: float(data[key])})
+            elif(isinstance(data[key], list)):
+                floatList = [float(x) for x in data[key]]
+                data.update({key: tuple(floatList)})
 
 class State(enum.Enum):
     STOPPED = 1,
