@@ -132,16 +132,18 @@ class TorcsClient:
             elif MSG_RESTART in buffer:
                 print("Server requested restart of driver.")
             else:
-                carSensorDict = self.serializer.decode(buffer)
-                self._preprocessing(carSensorDict)
-    	        
-                self.printAllData(carSensorDict)
-                self._updateDataFrame(carSensorDict)
+                rawSensorDict = self.serializer.decode(buffer)
+                carState = CarStateDto(rawSensorDict)
 
-                arr = np.array([carSensorDict['speed'][0], carSensorDict['speed'][1], carSensorDict["speed"][2], carSensorDict["angle"], carSensorDict["location"][2],
-                                 carSensorDict["trackPos"], carSensorDict["distFromStart"]]).astype(float)
-                print(arr)
-                logger.info(json.dumps(carSensorDict))
+                carSensorDf = carState.getDict()
+                self._preprocessing(carSensorDf)
+
+                
+                # self._updateDataFrame(carSensorDf) # Geeft problemen bij dumbdriver
+
+                arr = np.array([carSensorDf['speed'][0], carSensorDf['speed'][1], carSensorDf["speed"][2], carSensorDf["angle"], carSensorDf["location"][2],
+                                 carSensorDf["trackPos"], carSensorDf["distFromStart"]]).astype(float)
+                logger.info(json.dumps(carSensorDf))
                 
                 # action = self.regressor.predict([arr])
                 # print(action)
@@ -154,8 +156,8 @@ class TorcsClient:
 
                 # command.steering = action[0][1]
                 # command.brake = action[0][2]
-                command = self.driver.drive(carSensorDict)
 
+                command = self.driver.drive(carSensorDf)
                 buffer = self.serializer.encode(command.actuator_dict)
                 self.socket.sendto(buffer, self.hostaddr)
 
