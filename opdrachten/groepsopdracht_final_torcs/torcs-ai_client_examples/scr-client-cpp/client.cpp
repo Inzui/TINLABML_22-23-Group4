@@ -1,23 +1,3 @@
-/***************************************************************************
-
-    file                 : client.cpp
-    copyright            : (C) 2007 Daniele Loiacono
-
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-/* Uncomment the following lines under windows */
-// #define WIN32 // maybe not necessary because already define
-// #define __DRIVER_CLASS__ SimpleDriver     // put here the name of your driver class
-// #define __DRIVER_INCLUDE__ "SimpleDriver.h" // put here the filename of your driver h\\eader
-
 #ifdef WIN32
 #include <WinSock.h>
 #else
