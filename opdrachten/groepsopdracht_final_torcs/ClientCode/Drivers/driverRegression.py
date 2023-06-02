@@ -12,12 +12,13 @@ class DriverRegression(DriverInterface):
     def __init__(self):
         self.trainingSetPath = "/vagrant/torcs-ai_client_examples/scr-client-cpp/data/forza_2023-05-19.csv"
         self.modelPath = "/vagrant/ClientCode/Models/model.sav"
+    
+    def start(self):
         try:
             self.regressor = self._load()
             print('model loaded')
         except FileNotFoundError:
             self.regressor = self.train()
-            self._save()
             print('model trained and saved')
     
     def drive(self, carState: dict) -> CommandDto:
@@ -25,7 +26,7 @@ class DriverRegression(DriverInterface):
         arr = np.array([carState['speed'][0], carState['speed'][1], carState["speed"][2], carState["angle"], carState["location"][2],
                                  carState["trackPos"], carState["distFromStart"]]).astype(float)
         action = self.predict([arr])
-        print(action)
+        # print(action)
 
         #implemented automatic gear, from 50 it shifts up every 30 km/h faster, 
         #when using it right now, the car starts to wobble and crashes.
@@ -76,6 +77,7 @@ class DriverRegression(DriverInterface):
         beta = self.normalEquation(X, Y)
         
         # regr = self.scikitMLP(X, Y)
+        self._save()
         return beta
 
     def predict(self, df):

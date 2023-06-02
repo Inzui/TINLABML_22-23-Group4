@@ -8,6 +8,7 @@ from Dto.carStateDto import CarStateDto
 
 from Drivers.driverInterface import *
 from Drivers.driverDumb import *
+from Services.supervisor import *
 
 #logging parameters
 LOG_PATH = "../../home/vagrant/Documents/Logs"
@@ -28,7 +29,8 @@ TO_SOCKET_SEC = 1
 TO_SOCKET_MSEC = TO_SOCKET_SEC * 1000
 
 class TorcsClient:
-    def __init__(self, driver: DriverInterface = DriverDumb(), hostname="localhost", port = 3001):
+    def __init__(self, driver: DriverInterface, hostname="localhost", port = 3001, training = False):
+        self.training = training
         self.hostaddr = (hostname, port)
         self.serializer = Serializer()
         self.state = State.STOPPED
@@ -36,6 +38,7 @@ class TorcsClient:
         self.dataFrame = pd.DataFrame()
 
         self.driver = driver
+        self.supervisor = Supervisor(driver, training)
 
     def run(self):
         """Enters cyclic execution of the client network interface."""
@@ -114,6 +117,8 @@ class TorcsClient:
                 self.stop()
             elif MSG_RESTART in buffer:
                 print("Server requested restart of driver.")
+                self.supervisor.retrain()
+                self._register_driver()
             else:
                 rawSensorDict = self.serializer.decode(buffer)
                 carState = CarStateDto(rawSensorDict)
@@ -125,6 +130,8 @@ class TorcsClient:
                 logger.info(json.dumps(carSensorDf))
 
                 command = self.driver.drive(carSensorDf)
+                self.supervisor.run(carSensorDf, command)
+
                 buffer = self.serializer.encode(command.actuator_dict)
                 self.socket.sendto(buffer, self.hostaddr)
 
