@@ -3,7 +3,7 @@ from Dto.commandDto import CommandDto
 
 import abc, math
 
-class DumbDriver(DriverInterface):
+class DriverDumb(DriverInterface):
     def __init__(self) -> None:
         self.steering_ctrl = CompositeController(
             ProportionalController(0.4),

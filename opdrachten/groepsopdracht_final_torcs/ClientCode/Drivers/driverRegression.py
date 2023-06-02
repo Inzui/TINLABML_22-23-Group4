@@ -1,3 +1,6 @@
+from Drivers.driverInterface import *
+from Dto.commandDto import CommandDto
+
 import numpy as np
 import pandas as pd
 import pickle
@@ -5,11 +8,10 @@ from scipy import stats
 from sklearn import linear_model
 from sklearn.neural_network import MLPRegressor
 
-trainingSetPath = "/vagrant/torcs-ai_client_examples/scr-client-cpp/data/forza_2023-05-19.csv"
-modelPath = "/vagrant/ClientCode/Services/machineLearning/model.sav"
-
-class MachineLearning:
+class DriverRegression(DriverInterface):
     def __init__(self):
+        self.trainingSetPath = "/vagrant/torcs-ai_client_examples/scr-client-cpp/data/forza_2023-05-19.csv"
+        self.modelPath = "/vagrant/ClientCode/Models/model.sav"
         try:
             self.regressor = self._load()
             print('model loaded')
@@ -17,6 +19,23 @@ class MachineLearning:
             self.regressor = self.train()
             self._save()
             print('model trained and saved')
+    
+    def drive(self, carState: dict) -> CommandDto:
+        command = CommandDto()
+        arr = np.array([carState['speed'][0], carState['speed'][1], carState["speed"][2], carState["angle"], carState["location"][2],
+                                 carState["trackPos"], carState["distFromStart"]]).astype(float)
+        action = self.predict([arr])
+        print(action)
+
+        #implemented automatic gear, from 50 it shifts up every 30 km/h faster, 
+        #when using it right now, the car starts to wobble and crashes.
+        #command.gear = self.getGear(data['speed'][0])
+        command.gear = 1
+        command.accelerator = action[0][0]
+        command.steering = action[0][1]
+        command.brake = action[0][2]
+
+        return command
 
     def normalEquation(self, X, Y):
         beta = np.dot(np.dot(np.linalg.inv(np.dot(np.transpose(X), X)), np.transpose(X)), Y)
@@ -35,7 +54,7 @@ class MachineLearning:
 
     def train(self):
         #Load the csv 
-        data = pd.read_csv(trainingSetPath, 
+        data = pd.read_csv(self.trainingSetPath, 
                         sep=';', index_col=False, header=0,
                         usecols=["s_speed_x", "s_speed_y", "s_speed_z", "s_angle", "s_z", "s_track_position", 
                                  "a_accelation", "a_steer", "s_distance_from_start", "a_brake"])
@@ -65,10 +84,10 @@ class MachineLearning:
         # return self.regressor.predict(df)
 
     def _save(self):
-        pickle.dump(self.regressor, open(modelPath, 'wb'))
+        pickle.dump(self.regressor, open(self.modelPath, 'wb'))
 
     def _load(self):
-        loadedModel = pickle.load(open(modelPath, 'rb'))
+        loadedModel = pickle.load(open(self.modelPath, 'rb'))
         return loadedModel
 
     def _removeOutliers(self, df):
