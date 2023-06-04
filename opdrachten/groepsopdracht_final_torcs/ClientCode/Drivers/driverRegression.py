@@ -51,7 +51,7 @@ class DriverRegression(DriverInterface):
         return beta
     
     def scikitMLP(self, X, Y):
-        reg = MLPRegressor(hidden_layer_sizes=(100,100,100), max_iter=500, activation='logistic', solver='adam', random_state=1)
+        reg = MLPRegressor(hidden_layer_sizes=(100,100,100), max_iter=5000, activation='logistic', solver='adam', random_state=1)
         reg.fit(X.values, Y.values)
         return reg
 
