@@ -43,12 +43,7 @@ class Supervisor():
         self.df.to_csv(self.driver.trainingSetPath, sep=';', index=False) 
         
     def _augmentData(self):
-        # print(self.df)
-        # self.df.applymap(self._add_noise)
-        # print(self.df)
-        for i in range(len(self.df)):
-            for j in range(len(self.df.columns)):
-                self.df.iat[i, j] = self._add_noise(self.df.iat[i, j])
+        self.df = self.df.applymap(self._add_noise)
 
     def _add_noise(self, data, noise_scale=0.1):
         noise = np.random.normal(0, noise_scale)
