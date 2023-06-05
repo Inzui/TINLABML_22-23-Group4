@@ -10,7 +10,9 @@ from sklearn.neural_network import MLPRegressor
 
 class DriverRegression(DriverInterface):
     def __init__(self):
-        self.trainingSetPath = "/vagrant/Logs/train_data/aalborg.csv"
+        # self.trainingSetPath = "/vagrant/Logs/train_data/combined_data.csv"
+        self.trainingSetPath = "/vagrant/Logs/train_data/manual_combined.csv"
+        # self.trainingSetPath = "/vagrant/Logs/train_data/aalborg.csv"
         self.modelPath = "/vagrant/ClientCode/Models/modelNewData.sav"
         try:
             self.regressor = self._load()
@@ -19,6 +21,7 @@ class DriverRegression(DriverInterface):
             self.regressor = self.train()
             self._save()
             print('model trained and saved')
+        self.lastgear = 1
     
     def drive(self, carState: dict) -> CommandDto:
         command = CommandDto()
@@ -30,10 +33,10 @@ class DriverRegression(DriverInterface):
                                     carState["track"][16], carState["track"][17], carState["track"][18]])
         
         action = self._predict([currentState])
-        print(action)
+        # print(action)
         #implemented automatic gear, from 50 it shifts up every 30 km/h faster, 
         #when using it right now, the car starts to wobble and crashes.
-        command.gear = self.getGear(carState['speed'][0])
+        command.gear = self.getGear(carState['speed'][0],action[0][0])
         command.accelerator = action[0][0]
         command.brake = action[0][1]
         command.steering = action[0][2]
@@ -51,7 +54,7 @@ class DriverRegression(DriverInterface):
         return beta
     
     def scikitMLP(self, X, Y):
-        reg = MLPRegressor(hidden_layer_sizes=(100,100,100), max_iter=5000, activation='logistic', solver='adam', random_state=1)
+        reg = MLPRegressor(hidden_layer_sizes=(20,20), max_iter=5000, activation='logistic', solver='adam', random_state=1)
         reg.fit(X.values, Y.values)
         return reg
 
@@ -59,6 +62,8 @@ class DriverRegression(DriverInterface):
         #Load the csv 
         trainingsSet = pd.read_csv(self.trainingSetPath, 
                         sep=',', index_col=False, header=0)
+        
+        print(trainingsSet)
 
         #clean data
         trainingsSet = self._cleanData(trainingsSet)
@@ -105,8 +110,13 @@ class DriverRegression(DriverInterface):
         df.reset_index(inplace=True)
         return df
     
-    def getGear(self, speed):
+    def getGear(self, speed, accel):
         gear = 1
         if speed > 50:
             gear = (speed + 10) // 30
+            if self.lastgear > gear and accel >0.5:
+                gear = self.lastgear
+            # elif self.lastgear < gear and accel < 1:
+
+        self.lastgear = gear
         return gear
