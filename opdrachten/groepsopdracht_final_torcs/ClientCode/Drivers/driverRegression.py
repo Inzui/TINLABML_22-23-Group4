@@ -12,13 +12,14 @@ class DriverRegression(DriverInterface):
     def __init__(self):
         self.trainingSetPath = "/vagrant/torcs-ai_client_examples/scr-client-cpp/data/forza_2023-05-19.csv"
         self.modelPath = "/vagrant/ClientCode/Models/model.sav"
+        self.regressor = None
     
     def start(self):
         try:
-            self.regressor = self._load()
+            self._load()
             print('model loaded')
         except FileNotFoundError:
-            self.regressor = self.train()
+            self.train()
             print('model trained and saved')
     
     def drive(self, carState: dict) -> CommandDto:
@@ -59,7 +60,7 @@ class DriverRegression(DriverInterface):
                         sep=';', index_col=False, header=0,
                         usecols=["s_speed_x", "s_speed_y", "s_speed_z", "s_angle", "s_z", "s_track_position", 
                                  "a_accelation", "a_steer", "s_distance_from_start", "a_brake"])
-        
+
         #clean data
         data = self._cleanData(data)
         data = self._removeOutliers(data)
@@ -78,7 +79,7 @@ class DriverRegression(DriverInterface):
         
         # regr = self.scikitMLP(X, Y)
         self._save()
-        return beta
+        self.regressor = beta
 
     def predict(self, df):
         # return self.regressor.predict(df)
@@ -90,7 +91,7 @@ class DriverRegression(DriverInterface):
 
     def _load(self):
         loadedModel = pickle.load(open(self.modelPath, 'rb'))
-        return loadedModel
+        self.regressor = loadedModel
 
     def _removeOutliers(self, df):
         df = df[(np.abs(stats.zscore(df, axis=0))<4).all(axis=1)]

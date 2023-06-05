@@ -34,6 +34,7 @@ class Supervisor():
         shutil.copy(self.bestTrainingSetPath, self.driver.trainingSetPath)
 
         self._genNewTrainingSet()
+        print("Training driver...")
         self.driver.train()
 
     def _genNewTrainingSet(self):                                                
@@ -43,13 +44,16 @@ class Supervisor():
         self.df.to_csv(self.driver.trainingSetPath, sep=';', index=False) 
         
     def _augmentData(self):
-        # print(self.df)
-        # self.df.applymap(self._add_noise)
-        # print(self.df)
-        for i in range(len(self.df)):
-            for j in range(len(self.df.columns)):
-                self.df.iat[i, j] = self._add_noise(self.df.iat[i, j])
+        columns = ['a_accelation', 'a_brake', 'a_steer']
 
-    def _add_noise(self, data, noise_scale=0.1):
+        tempDf = self.df[columns]
+        self.df = self.df.drop(columns, axis = 1)
+
+        self.df = self.df.applymap(self._add_noise)
+
+        for column in columns:
+            self.df[column] = tempDf[column].values
+
+    def _add_noise(self, data, noise_scale=0.01):
         noise = np.random.normal(0, noise_scale)
         return data + noise
