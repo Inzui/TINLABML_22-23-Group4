@@ -1,6 +1,7 @@
 from Dto.commandDto import CommandDto
 from Drivers.driverInterface import DriverInterface
-import os, shutil, logging, time
+from Services.memoryService import MemoryService
+import os, shutil
 import pandas as pd
 import numpy as np
 
@@ -10,12 +11,16 @@ class Supervisor():
         self.driver = driver
         self.driver.start()
 
-        self.bestLapTime = 1000000
-        self.lastLapTime = 0
-
         self.trainingSetDir = os.path.join(os.getcwd(), "Models")
         self.bestTrainingSetPath = os.path.join(self.trainingSetDir, "BestTrainingSet.csv")
         self.driver.trainingSetPath = os.path.join(self.trainingSetDir, "TrainingSet.csv")
+        self.lapTimePath = os.path.join(self.trainingSetDir, "FastestLap.txt")
+
+        self.bestLapTime = MemoryService.loadFastestLapTime(self.lapTimePath)
+        self.lastLapTime = 0
+
+        if (os.path.exists(self.bestTrainingSetPath)):
+            shutil.copy(self.bestTrainingSetPath, self.driver.trainingSetPath)
         self.df = pd.read_csv(self.driver.trainingSetPath)
 
     def run(self, carState: dict, command: CommandDto):
@@ -29,6 +34,7 @@ class Supervisor():
         if (self.lastLapTime < self.bestLapTime):               # If the last lap time is better, keep the new training set.
             print(f"New best lap time: '{self.lastLapTime}'.")
             self.bestLapTime = self.lastLapTime
+            MemoryService.writeFastestlapTime(self.lapTimePath, self.bestLapTime)
             shutil.copy(self.driver.trainingSetPath, self.bestTrainingSetPath)
 
         shutil.copy(self.bestTrainingSetPath, self.driver.trainingSetPath)
@@ -39,12 +45,12 @@ class Supervisor():
 
     def _genNewTrainingSet(self):                                                
         print("Generating new training set...")
-        self.df = pd.read_csv(self.driver.trainingSetPath, sep=';')
+        self.df = pd.read_csv(self.driver.trainingSetPath, sep=',')
         self._augmentData()
-        self.df.to_csv(self.driver.trainingSetPath, sep=';', index=False) 
+        self.df.to_csv(self.driver.trainingSetPath, sep=',', index=False) 
         
     def _augmentData(self):
-        columns = ['a_accelation', 'a_brake', 'a_steer']
+        columns = ["ACCELERATION", "BRAKE", "STEERING"]
 
         tempDf = self.df[columns]
         self.df = self.df.drop(columns, axis = 1)

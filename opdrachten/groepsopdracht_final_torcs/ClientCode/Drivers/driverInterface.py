@@ -4,10 +4,10 @@ class DriverInterface():
     def __init__(self) -> None:
         self.trainingSetPath = None
 
-    def start():
+    def start(self):
         pass
 
-    def train():
+    def train(self):
         pass
 
     def drive(self, carState: dict) -> CommandDto:
