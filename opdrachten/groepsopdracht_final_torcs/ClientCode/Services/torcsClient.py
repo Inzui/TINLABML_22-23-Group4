@@ -4,6 +4,8 @@ import os
 import time
 import json
 import pandas as pd
+import keyboard
+import threading
 from Dto.carStateDto import CarStateDto
 
 from Drivers.driverInterface import *
@@ -103,9 +105,17 @@ class TorcsClient:
                 if MSG_IDENTIFIED in buffer:
                     print("Server accepted connection.")
                     connected = True
+                    thr = threading.Thread(target=self.fastForward)
+                    thr.start()
 
             except socket.error as ex:
                 print(f"No connection to server yet ({ex}).")
+
+    def fastForward(self):
+        time.sleep(3)
+        for i in range(6):
+            keyboard.press_and_release('+')
+            time.sleep(1)
 
     def _process_server_msg(self):
         try:

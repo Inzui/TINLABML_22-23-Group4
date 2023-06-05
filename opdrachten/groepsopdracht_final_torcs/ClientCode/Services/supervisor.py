@@ -24,9 +24,13 @@ class Supervisor():
         self.df = pd.read_csv(self.driver.trainingSetPath)
 
     def run(self, carState: dict, command: CommandDto):
-        if (self.training and carState["lastLapTime"] > 0):     # If the car has finished the lap, restart the simulation.
-            command.meta = 1
-            self.lastLapTime = carState["lastLapTime"]
+        if (self.training):
+            command.meta = float(self.edgeDetected(carState["track"]))
+            if (command.meta == 1.0):
+                self.lastLapTime = 10000
+            elif (carState["lastLapTime"] > 0):                 # If the car has finished the lap, restart the simulation.
+                command.meta = 1
+                self.lastLapTime = carState["lastLapTime"]
             
     def retrain(self):
         print(f"Lap finished: Best lap time: '{self.bestLapTime}', Current lap time: '{self.lastLapTime}'.")
@@ -42,6 +46,9 @@ class Supervisor():
         self._genNewTrainingSet()
         print("Training driver...")
         self.driver.train()
+    
+    def edgeDetected(self, trackData: list) -> bool:
+        return (max(trackData) == -1.0)
 
     def _genNewTrainingSet(self):                                                
         print("Generating new training set...")
