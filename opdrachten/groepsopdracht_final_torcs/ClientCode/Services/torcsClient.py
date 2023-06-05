@@ -31,8 +31,10 @@ TO_SOCKET_SEC = 1
 TO_SOCKET_MSEC = TO_SOCKET_SEC * 1000
 
 class TorcsClient:
-    def __init__(self, driver: DriverInterface, hostname="localhost", port = 3001, training = False):
+    def __init__(self, driver: DriverInterface, hostname: str = "localhost", port: int = 3001, training: bool = False, maxImprovements: int = 10):
         self.training = training
+        self.maxImprovements = maxImprovements
+
         self.hostaddr = (hostname, port)
         self.serializer = Serializer()
         self.state = State.STOPPED
@@ -127,8 +129,14 @@ class TorcsClient:
                 self.stop()
             elif MSG_RESTART in buffer:
                 print("Server requested restart of driver.")
-                self.supervisor.retrain()
-                self._register_driver()
+                if (self.training):
+                    if (self.supervisor.improvementsCount < self.maxImprovements):
+                        self.supervisor.retrain()
+                        self._register_driver()
+                    else:
+                        print(f"Training finished!")
+                else:
+                    self._register_driver()
             else:
                 rawSensorDict = self.serializer.decode(buffer)
                 carState = CarStateDto(rawSensorDict)
@@ -151,12 +159,6 @@ class TorcsClient:
         except KeyboardInterrupt:
             print("User requested shutdown.")
             self.stop()
-
-    # def getGear(self, speed):
-    #     gear = 1
-    #     if speed > 50:
-    #         gear = (speed + 10) // 30
-    #     return gear
 
     def printAllData(self, data):
         [print(key, "->", data[key]) for key in data]

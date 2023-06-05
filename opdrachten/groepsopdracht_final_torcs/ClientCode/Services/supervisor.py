@@ -1,6 +1,8 @@
 from Dto.commandDto import CommandDto
 from Drivers.driverInterface import DriverInterface
 from Services.memoryService import MemoryService
+from datetime import timedelta
+
 import os, shutil
 import pandas as pd
 import numpy as np
@@ -18,6 +20,7 @@ class Supervisor():
 
         self.bestLapTime = MemoryService.loadFastestLapTime(self.lapTimePath)
         self.lastLapTime = 0
+        self.improvementsCount = 0
 
         if (os.path.exists(self.bestTrainingSetPath)):
             shutil.copy(self.bestTrainingSetPath, self.driver.trainingSetPath)
@@ -33,18 +36,20 @@ class Supervisor():
                 self.lastLapTime = carState["lastLapTime"]
             
     def retrain(self):
-        print(f"Lap finished: Best lap time: '{self.bestLapTime}', Current lap time: '{self.lastLapTime}'.")
+        print(f"Lap finished: Best lap time: '{str(timedelta(seconds = self.bestLapTime))}', Current lap time: '{str(timedelta(seconds = self.lastLapTime))}'.")
 
         if (self.lastLapTime < self.bestLapTime):               # If the last lap time is better, keep the new training set.
-            print(f"New best lap time: '{self.lastLapTime}'.")
+            self.improvementsCount += 1
             self.bestLapTime = self.lastLapTime
+            print(f"New best lap time (Improvement #{self.improvementsCount}): '{str(timedelta(seconds = self.bestLapTime))}'.")
+
             MemoryService.writeFastestlapTime(self.lapTimePath, self.bestLapTime)
             shutil.copy(self.driver.trainingSetPath, self.bestTrainingSetPath)
 
         shutil.copy(self.bestTrainingSetPath, self.driver.trainingSetPath)
 
-        self._genNewTrainingSet()
         print("Training driver...")
+        self._genNewTrainingSet()
         self.driver.train()
     
     def edgeDetected(self, trackData: list) -> bool:
