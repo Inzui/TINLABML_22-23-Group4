@@ -31,6 +31,8 @@ class DriverRegression(DriverInterface):
                                     carState["track"][16], carState["track"][17], carState["track"][18]])
         
         action = self._predict([currentState])
+        
+        command.meta = self.edgeDetected(carState["track"])
 
         #implemented automatic gear, from 50 it shifts up every 30 km/h faster, 
         #when using it right now, the car starts to wobble and crashes.
@@ -40,6 +42,9 @@ class DriverRegression(DriverInterface):
         command.steering = action[0][2]
 
         return command
+    
+    def edgeDetected(self, trackData: list):
+        return (max(trackData) == -1)
 
     def normalEquation(self, X, Y):
         beta = np.dot(np.dot(np.linalg.inv(np.dot(np.transpose(X), X)), np.transpose(X)), Y)
