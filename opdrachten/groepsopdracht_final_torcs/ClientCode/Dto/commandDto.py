@@ -10,6 +10,7 @@ class CommandDto():
         self.gear = 0
         self.steering = 0.0
         self.focus = 0.0
+        self.meta = 0.0
 
     @property
     def actuator_dict(self):
@@ -18,7 +19,7 @@ class CommandDto():
             brake=[self.brake],
             gear=[self.gear],
             steer=[self.steering],
-            clutch=[0],  # server car does not need clutch control?
+            clutch=[0],
             focus=[self.focus],
-            meta=[0]  # no support for server restart via meta=1
+            meta=[self.meta]
         )
