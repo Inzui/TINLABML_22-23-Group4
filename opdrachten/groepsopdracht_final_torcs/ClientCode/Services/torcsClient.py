@@ -4,14 +4,11 @@ import os
 import time
 import json
 import pandas as pd
-import numpy as np
 from Dto.carStateDto import CarStateDto
-from Dto.commandDto import CommandDto
-
-from Services.machineLearning.machineLearning import MachineLearning
 
 from Drivers.driverInterface import *
-from Drivers.dumbDriver import *
+from Drivers.driverDumb import *
+from Services.supervisor import *
 
 #logging parameters
 LOG_PATH = "../../home/vagrant/Documents/Logs"
@@ -32,27 +29,16 @@ TO_SOCKET_SEC = 1
 TO_SOCKET_MSEC = TO_SOCKET_SEC * 1000
 
 class TorcsClient:
-    """Client for TORCS racing car simulation with SCRC network server.
-
-    Attributes:
-        hostaddr (tuple): Tuple of hostname and port.
-        port (int): Port number to connect, from 3001 to 3010 for ten clients.
-        driver (Driver): Driving logic implementation.
-        serializer (Serializer): Implementation of network data encoding.
-        state (State): Runtime state of the client.
-        socket (socket): UDP socket to server.
-    """
-
-    def __init__(self, driver: DriverInterface = DumbDriver(), hostname="localhost", port = 3001):
+    def __init__(self, driver: DriverInterface, hostname="localhost", port = 3001, training = False):
+        self.training = training
         self.hostaddr = (hostname, port)
         self.serializer = Serializer()
         self.state = State.STOPPED
         self.socket = None
         self.dataFrame = pd.DataFrame()
-        self.regressor = MachineLearning()
 
         self.driver = driver
-
+        self.supervisor = Supervisor(driver, training)
 
     def run(self):
         """Enters cyclic execution of the client network interface."""
@@ -131,33 +117,21 @@ class TorcsClient:
                 self.stop()
             elif MSG_RESTART in buffer:
                 print("Server requested restart of driver.")
+                self.supervisor.retrain()
+                self._register_driver()
             else:
                 rawSensorDict = self.serializer.decode(buffer)
                 carState = CarStateDto(rawSensorDict)
-
                 carSensorDf = carState.getDict()
+                
                 self._preprocessing(carSensorDf)
-
+                # self._updateDataFrame(carSensorDf)
                 
-                # self._updateDataFrame(carSensorDf) # Geeft problemen bij dumbdriver
-
-                arr = np.array([carSensorDf['speed'][0], carSensorDf['speed'][1], carSensorDf["speed"][2], carSensorDf["angle"], carSensorDf["location"][2],
-                                 carSensorDf["trackPos"], carSensorDf["distFromStart"]]).astype(float)
                 logger.info(json.dumps(carSensorDf))
-                
-                # action = self.regressor.predict([arr])
-                # print(action)
-
-                # #implemented automatic gear, from 50 it shifts up every 30 km/h faster, 
-                # #when using it right now, the car starts to wobble and crashes.
-                # #command.gear = self.getGear(data['speed'][0])
-                # command.gear = 1
-                # command.accelerator = action[0][0] if float(data["distFromStart"]) < 3200 else 1
-
-                # command.steering = action[0][1]
-                # command.brake = action[0][2]
 
                 command = self.driver.drive(carSensorDf)
+                self.supervisor.run(carSensorDf, command)
+
                 buffer = self.serializer.encode(command.actuator_dict)
                 self.socket.sendto(buffer, self.hostaddr)
 
