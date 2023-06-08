@@ -25,11 +25,13 @@ class Supervisor():
         if (os.path.exists(self.bestTrainingSetPath)):
             shutil.copy(self.bestTrainingSetPath, self.driver.trainingSetPath)
         self.df = pd.read_csv(self.driver.trainingSetPath)
+        self.timeOfTrack = 0
 
     def run(self, carState: dict, command: CommandDto):
         if (self.training):
-            command.meta = float(self.edgeDetected(carState["track"]))
+            command.meta = float(self.edgeDetected(carState["track"], carState["curLapTime"]))
             if (command.meta == 1.0):
+                self.amountOfTrack = 0
                 self.lastLapTime = 10000
             elif (carState["lastLapTime"] > 0):                 # If the car has finished the lap, restart the simulation.
                 command.meta = 1
@@ -49,11 +51,23 @@ class Supervisor():
         shutil.copy(self.bestTrainingSetPath, self.driver.trainingSetPath)
 
         print("Training driver...")
-        self._genNewTrainingSet()
+
+        if(not self.lastLapTime == 0):
+            self._genNewTrainingSet()
+        
         self.driver.train()
     
-    def edgeDetected(self, trackData: list) -> bool:
-        return (max(trackData) == -1.0)
+    def edgeDetected(self, trackData: list, time: float) -> bool:
+        timeElapsed = 0
+        if (max(trackData) == -1.0): 
+            if(self.timeOfTrack == 0):
+                self.timeOfTrack = time
+            timeElapsed = time - self.timeOfTrack
+        else:
+            self.timeOfTrack = 0
+        print(timeElapsed)
+
+        return timeElapsed > 2
 
     def _genNewTrainingSet(self):                                                
         print("Generating new training set...")

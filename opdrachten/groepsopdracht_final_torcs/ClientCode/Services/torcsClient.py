@@ -107,8 +107,9 @@ class TorcsClient:
                 if MSG_IDENTIFIED in buffer:
                     print("Server accepted connection.")
                     connected = True
-                    thr = threading.Thread(target=self.fastForward)
-                    thr.start()
+                    if (self.training):
+                        thr = threading.Thread(target=self.fastForward)
+                        thr.start()
 
             except socket.error as ex:
                 print(f"No connection to server yet ({ex}).")

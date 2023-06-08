@@ -70,7 +70,7 @@ class DriverRegression(DriverInterface):
         trainingsSet = pd.read_csv(self.trainingSetPath, 
                         sep=',', index_col=False, header=0)
         
-        print(trainingsSet)
+        #print(trainingsSet)
 
         #clean data
         trainingsSet = self._cleanData(trainingsSet)
