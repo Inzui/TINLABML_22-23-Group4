@@ -1,3 +1,4 @@
+import copy
 import enum, socket
 import logging
 import os
@@ -9,7 +10,7 @@ import threading
 from Dto.carStateDto import CarStateDto
 
 from Drivers.driverInterface import *
-from Drivers.driverDumb import *
+from Drivers.driverPid import *
 from Services.supervisor import *
 
 #logging parameters
@@ -31,8 +32,9 @@ TO_SOCKET_SEC = 1
 TO_SOCKET_MSEC = TO_SOCKET_SEC * 1000
 
 class TorcsClient:
-    def __init__(self, driver: DriverInterface, hostname: str = "localhost", port: int = 3001, training: bool = False, maxImprovements: int = 10):
+    def __init__(self, driver: DriverInterface, hostname: str = "localhost", port: int = 3001, training: bool = False, speedUp: bool = True, maxImprovements: int = 10):
         self.training = training
+        self.speedup = speedUp
         self.maxImprovements = maxImprovements
 
         self.hostaddr = (hostname, port)
@@ -107,7 +109,7 @@ class TorcsClient:
                 if MSG_IDENTIFIED in buffer:
                     print("Server accepted connection.")
                     connected = True
-                    if (self.training):
+                    if (self.training and self.speedup):
                         thr = threading.Thread(target=self.fastForward)
                         thr.start()
 
@@ -146,13 +148,18 @@ class TorcsClient:
                 self._preprocessing(carSensorDf)
                 # self._updateDataFrame(carSensorDf)
                 
-                logger.info(json.dumps(carSensorDf))
-
                 command = self.driver.drive(carSensorDf)
                 self.supervisor.run(carSensorDf, command)
 
                 buffer = self.serializer.encode(command.actuator_dict)
                 self.socket.sendto(buffer, self.hostaddr)
+
+                # Add the acceleration, braking and steering to the logging.
+                combinedCarSensorDf = copy.deepcopy(carSensorDf)
+                combinedCarSensorDf["acceleration"] = command.accelerator
+                combinedCarSensorDf["brake"] = command.brake
+                combinedCarSensorDf["steering"] = command.steering
+                logger.info(json.dumps(combinedCarSensorDf))
 
         except socket.error as ex:
             print(f"Communication with server failed: {ex}.")
