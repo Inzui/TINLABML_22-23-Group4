@@ -14,7 +14,7 @@ from Drivers.driverPid import *
 from Services.supervisor import *
 
 #logging parameters
-LOG_PATH = "../../home/vagrant/Documents/Logs"
+LOG_PATH = "/home/vagrant/Documents/Logs"
 if (not os.path.exists(LOG_PATH)):
     os.mkdir(LOG_PATH)
 logging.basicConfig(filename=os.path.join(LOG_PATH, f"Race Log - {time.ctime(time.time())}.log"), 
