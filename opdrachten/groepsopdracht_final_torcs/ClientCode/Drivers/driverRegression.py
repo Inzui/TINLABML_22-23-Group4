@@ -3,24 +3,32 @@ from Dto.commandDto import CommandDto
 
 import numpy as np
 import pandas as pd
-import pickle
+import pickle, os
 from scipy import stats
 from sklearn import linear_model
 from sklearn.neural_network import MLPRegressor
 
 class DriverRegression(DriverInterface):
     def __init__(self):
-        # self.trainingSetPath = "/vagrant/Logs/train_data/combined_data.csv"
-        self.trainingSetPath = "/vagrant/Logs/train_data/manual_combined.csv"
-        # self.trainingSetPath = "/vagrant/Logs/train_data/aalborg.csv"
+        self.regressor = None
+        self.trainingSetPath = os.path.join(os.getcwd(), "Models", "BestTrainingSet.csv")
         self.modelPath = "/vagrant/ClientCode/Models/modelNewData.sav"
-        try:
-            self.regressor = self._load()
-            print('model loaded')
-        except FileNotFoundError:
-            self.regressor = self.train()
-            self._save()
-            print('model trained and saved')
+        self.train()
+        # try:
+        #     self._load()
+        #     print('model loaded')
+        # except FileNotFoundError:
+        #     self.train()
+        #     print('model trained and saved')
+        # self.trainingSetPath = "/vagrant/Logs/train_data/combined_data.csv"
+        # self.trainingSetPath = "/vagrant/Logs/train_data/manual_combined.csv"
+        # try:
+        #     self.regressor = self._load()
+        #     print('model loaded')
+        # except FileNotFoundError:
+        #     self.regressor = self.train()
+        #     self._save()
+        #     print('model trained and saved')
         self.lastgear = 1
     
     def drive(self, carState: dict) -> CommandDto:
@@ -35,7 +43,6 @@ class DriverRegression(DriverInterface):
         
         
         action = self._predict([currentState])
-        # print(action)
         #implemented automatic gear, from 50 it shifts up every 30 km/h faster, 
         #when using it right now, the car starts to wobble and crashes.
         command.gear = self.getGear(carState['speed'][0],action[0][0])
@@ -64,8 +71,6 @@ class DriverRegression(DriverInterface):
         #Load the csv 
         trainingsSet = pd.read_csv(self.trainingSetPath, 
                         sep=',', index_col=False, header=0)
-        
-        print(trainingsSet.head())
 
         #clean data
         trainingsSet = self._cleanData(trainingsSet)
@@ -101,8 +106,8 @@ class DriverRegression(DriverInterface):
 
         # regr = self.normalEquation(X, Y)
         
-        regr = self.scikitMLP(X, Y)
-        return regr
+        self.regressor = self.scikitMLP(X, Y)
+        self._save()
 
     def _predict(self, df):
         return self.regressor.predict(df)
@@ -113,7 +118,7 @@ class DriverRegression(DriverInterface):
 
     def _load(self):
         loadedModel = pickle.load(open(self.modelPath, 'rb'))
-        return loadedModel
+        self.regressor = loadedModel
 
     def _removeOutliers(self, df):
         df = df[(np.abs(stats.zscore(df, axis=0))<3).all(axis=1)]

@@ -1,13 +1,17 @@
+import copy
 import enum, socket
 import logging
 import os
 import time
 import json
 import pandas as pd
+import keyboard
+import threading
 from Dto.carStateDto import CarStateDto
 
 from Drivers.driverInterface import *
-from Drivers.driverDumb import *
+from Drivers.driverPid import *
+from Services.supervisor import *
 
 #logging parameters
 LOG_PATH = "../../home/vagrant/Documents/Logs"
@@ -28,7 +32,11 @@ TO_SOCKET_SEC = 1
 TO_SOCKET_MSEC = TO_SOCKET_SEC * 1000
 
 class TorcsClient:
-    def __init__(self, driver: DriverInterface = DriverDumb(), hostname="localhost", port = 3001):
+    def __init__(self, driver: DriverInterface, hostname: str = "localhost", port: int = 3001, training: bool = False, speedUp: bool = True, maxImprovements: int = 10):
+        self.training = training
+        self.speedup = speedUp
+        self.maxImprovements = maxImprovements
+
         self.hostaddr = (hostname, port)
         self.serializer = Serializer()
         self.state = State.STOPPED
@@ -36,6 +44,7 @@ class TorcsClient:
         self.dataFrame = pd.DataFrame()
 
         self.driver = driver
+        self.supervisor = Supervisor(driver, training)
 
     def run(self):
         """Enters cyclic execution of the client network interface."""
@@ -100,9 +109,18 @@ class TorcsClient:
                 if MSG_IDENTIFIED in buffer:
                     print("Server accepted connection.")
                     connected = True
+                    if (self.training and self.speedup):
+                        thr = threading.Thread(target=self.fastForward)
+                        thr.start()
 
             except socket.error as ex:
                 print(f"No connection to server yet ({ex}).")
+
+    def fastForward(self):
+        time.sleep(3)
+        for i in range(6):
+            keyboard.press_and_release('+')
+            time.sleep(1)
 
     def _process_server_msg(self):
         try:
@@ -114,6 +132,14 @@ class TorcsClient:
                 self.stop()
             elif MSG_RESTART in buffer:
                 print("Server requested restart of driver.")
+                if (self.training):
+                    if (self.supervisor.improvementsCount < self.maxImprovements):
+                        self.supervisor.retrain()
+                        self._register_driver()
+                    else:
+                        print(f"Training finished!")
+                else:
+                    self._register_driver()
             else:
                 rawSensorDict = self.serializer.decode(buffer)
                 carState = CarStateDto(rawSensorDict)
@@ -122,11 +148,18 @@ class TorcsClient:
                 self._preprocessing(carSensorDf)
                 # self._updateDataFrame(carSensorDf)
                 
-                logger.info(json.dumps(carSensorDf))
-
                 command = self.driver.drive(carSensorDf)
+                self.supervisor.run(carSensorDf, command)
+
                 buffer = self.serializer.encode(command.actuator_dict)
                 self.socket.sendto(buffer, self.hostaddr)
+
+                # Add the acceleration, braking and steering to the logging.
+                combinedCarSensorDf = copy.deepcopy(carSensorDf)
+                combinedCarSensorDf["acceleration"] = command.accelerator
+                combinedCarSensorDf["brake"] = command.brake
+                combinedCarSensorDf["steering"] = command.steering
+                logger.info(json.dumps(combinedCarSensorDf))
 
         except socket.error as ex:
             print(f"Communication with server failed: {ex}.")
@@ -134,12 +167,6 @@ class TorcsClient:
         except KeyboardInterrupt:
             print("User requested shutdown.")
             self.stop()
-
-    # def getGear(self, speed):
-    #     gear = 1
-    #     if speed > 50:
-    #         gear = (speed + 10) // 30
-    #     return gear
 
     def printAllData(self, data):
         [print(key, "->", data[key]) for key in data]
