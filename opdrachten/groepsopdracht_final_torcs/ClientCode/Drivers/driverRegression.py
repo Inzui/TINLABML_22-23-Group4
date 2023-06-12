@@ -35,11 +35,13 @@ class DriverRegression(DriverInterface):
     def drive(self, carState: dict) -> CommandDto:
         command = CommandDto()
         currentState = np.array([carState["speed"][0], carState["trackPos"], carState["angle"], 
-                                    carState["track"][0], carState["track"][1], carState["track"][2], carState["track"][3],
-                                    carState["track"][4], carState["track"][5], carState["track"][6], carState["track"][7],
-                                    carState["track"][8], carState["track"][9], carState["track"][10], carState["track"][11],
-                                    carState["track"][12], carState["track"][13], carState["track"][14], carState["track"][15],
-                                    carState["track"][16], carState["track"][17], carState["track"][18]])
+                                    carState["track"][0], carState["track"][1], carState["track"][2], carState["track"][3], carState["track"][4],
+                                    carState["track"][5], 
+                                    carState["track"][9], 
+                                    carState["track"][13], carState["track"][14], carState["track"][15], carState["track"][16], carState["track"][17], carState["track"][18],
+                                    np.mean([carState["track"][6], carState["track"][7], carState["track"][8]]),
+                                    np.mean([carState["track"][10], carState["track"][11], carState["track"][12]])])
+        
         
         action = self._predict([currentState])
         #implemented automatic gear, from 50 it shifts up every 30 km/h faster, 
@@ -62,7 +64,7 @@ class DriverRegression(DriverInterface):
         return beta
     
     def scikitMLP(self, X, Y):
-        reg = MLPRegressor(hidden_layer_sizes=(20,20), max_iter=5000, activation='logistic', solver='adam', random_state=1)
+        reg = MLPRegressor(hidden_layer_sizes=(33, 33), max_iter=500, activation='logistic', solver='adam', random_state=1)
         reg.fit(X.values, Y.values)
         return reg
 
@@ -70,19 +72,31 @@ class DriverRegression(DriverInterface):
         #Load the csv 
         trainingsSet = pd.read_csv(self.trainingSetPath, 
                         sep=',', index_col=False, header=0)
-        
-        #print(trainingsSet)
 
         #clean data
         trainingsSet = self._cleanData(trainingsSet)
-        trainingsSet = self._removeOutliers(trainingsSet)
+        # trainingsSet = self._removeOutliers(trainingsSet)
 
         #Split the data into variables and results
+        # X = trainingsSet[["SPEED", "TRACK_POSITION", "ANGLE_TO_TRACK_AXIS",
+        #                          "TRACK_EDGE_0", "TRACK_EDGE_1", "TRACK_EDGE_2", "TRACK_EDGE_3", "TRACK_EDGE_4", "TRACK_EDGE_5",
+        #                           "TRACK_EDGE_6", "TRACK_EDGE_7", "TRACK_EDGE_8", "TRACK_EDGE_9", "TRACK_EDGE_10", "TRACK_EDGE_11",
+        #                            "TRACK_EDGE_12", "TRACK_EDGE_13", "TRACK_EDGE_14", "TRACK_EDGE_15", "TRACK_EDGE_16", "TRACK_EDGE_17",
+        #                              "TRACK_EDGE_18"]]
+
         X = trainingsSet[["SPEED", "TRACK_POSITION", "ANGLE_TO_TRACK_AXIS",
-                                 "TRACK_EDGE_0", "TRACK_EDGE_1", "TRACK_EDGE_2", "TRACK_EDGE_3", "TRACK_EDGE_4", "TRACK_EDGE_5",
-                                  "TRACK_EDGE_6", "TRACK_EDGE_7", "TRACK_EDGE_8", "TRACK_EDGE_9", "TRACK_EDGE_10", "TRACK_EDGE_11",
-                                   "TRACK_EDGE_12", "TRACK_EDGE_13", "TRACK_EDGE_14", "TRACK_EDGE_15", "TRACK_EDGE_16", "TRACK_EDGE_17",
-                                     "TRACK_EDGE_18"]]
+                         "TRACK_EDGE_0", "TRACK_EDGE_1", "TRACK_EDGE_2", "TRACK_EDGE_3", "TRACK_EDGE_4", "TRACK_EDGE_5",
+                            "TRACK_EDGE_6", "TRACK_EDGE_7", "TRACK_EDGE_8",
+                            "TRACK_EDGE_9",
+                            "TRACK_EDGE_10", "TRACK_EDGE_11", "TRACK_EDGE_12",
+                            "TRACK_EDGE_13", "TRACK_EDGE_14", "TRACK_EDGE_15", "TRACK_EDGE_16", "TRACK_EDGE_17", "TRACK_EDGE_18"]]
+
+        X['TRACK_MEAN_-20'] = X[["TRACK_EDGE_6", "TRACK_EDGE_7", "TRACK_EDGE_8"]].mean(axis=1)
+        X['TRACK_MEAN_20'] = X[["TRACK_EDGE_10", "TRACK_EDGE_11", "TRACK_EDGE_12"]].mean(axis=1)
+        X.drop(["TRACK_EDGE_6", "TRACK_EDGE_7", "TRACK_EDGE_8", "TRACK_EDGE_10", "TRACK_EDGE_11", "TRACK_EDGE_12"], axis=1, inplace=True)
+
+        print(X.head().to_string())
+
         Y = trainingsSet[["ACCELERATION", "BRAKE", "STEERING"]]
 
         # # Create linear regression object
@@ -108,7 +122,7 @@ class DriverRegression(DriverInterface):
         self.regressor = loadedModel
 
     def _removeOutliers(self, df):
-        df = df[(np.abs(stats.zscore(df, axis=0))<4).all(axis=1)]
+        df = df[(np.abs(stats.zscore(df, axis=0))<3).all(axis=1)]
         df.reset_index(inplace=True)
         return df
     
