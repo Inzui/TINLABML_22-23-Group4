@@ -13,15 +13,6 @@ from Drivers.driverInterface import *
 from Drivers.driverPid import *
 from Services.supervisor import *
 
-#logging parameters
-LOG_PATH = "/home/vagrant/Documents/Logs"
-if (not os.path.exists(LOG_PATH)):
-    os.mkdir(LOG_PATH)
-logging.basicConfig(filename=os.path.join(LOG_PATH, f"Race Log - {time.ctime(time.time())}.log"), 
-                    level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', 
-                    datefmt='%Y-%m-%d %H:%M:%S')
-logger = logging.getLogger(__name__)
-
 # special messages from server:
 MSG_IDENTIFIED = b"***identified***"
 MSG_SHUTDOWN = b"***shutdown***"
@@ -34,6 +25,15 @@ TO_SOCKET_MSEC = TO_SOCKET_SEC * 1000
 class TorcsClient:
     def __init__(self, driver: DriverInterface, hostname: str = "localhost", port: int = 3001, training: bool = False, speedUp: bool = True, maxImprovements: int = 10):
         self.training = training
+        self.logPath = "/home/vagrant/Documents/Logs"
+        if (self.training):
+            if (not os.path.exists(self.logPath)):
+                os.mkdir(self.logPath)
+            logging.basicConfig(filename=os.path.join(self.logPath, f"Race Log - {time.ctime(time.time())}.log"), 
+                                level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', 
+                                datefmt='%Y-%m-%d %H:%M:%S')
+            self.logger = logging.getLogger(__name__)
+
         self.speedup = speedUp
         self.maxImprovements = maxImprovements
 
@@ -159,7 +159,8 @@ class TorcsClient:
                 combinedCarSensorDf["acceleration"] = command.accelerator
                 combinedCarSensorDf["brake"] = command.brake
                 combinedCarSensorDf["steering"] = command.steering
-                logger.info(json.dumps(combinedCarSensorDf))
+                if (self.training):
+                    self.logger.info(json.dumps(combinedCarSensorDf))
 
         except socket.error as ex:
             print(f"Communication with server failed: {ex}.")
