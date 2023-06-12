@@ -11,8 +11,9 @@ from sklearn.neural_network import MLPRegressor
 class DriverRegression(DriverInterface):
     def __init__(self):
         self.regressor = None
-        self.trainingSetPath = os.path.join(os.getcwd(), "Models", "BestTrainingSet.csv")
-        self.modelPath = "/vagrant/ClientCode/Models/modelNewData.sav"
+        self.modelDir = os.path.abspath(os.path.join(__file__, "..", "..", "Models"))
+        self.trainingSetPath = os.path.join(self.modelDir, "BestTrainingSet.csv")
+        self.modelPath = os.path.join(self.modelDir, "modelNewData.sav")
         self.train()
         # try:
         #     self._load()

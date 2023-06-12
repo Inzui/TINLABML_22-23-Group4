@@ -13,7 +13,7 @@ class Supervisor():
         self.driver = driver
         self.driver.start()
 
-        self.trainingSetDir = os.path.join(os.getcwd(), "Models")
+        self.trainingSetDir = os.path.abspath(os.path.join(__file__, "..", "..", "Models"))
         self.bestTrainingSetPath = os.path.join(self.trainingSetDir, "BestTrainingSet.csv")
         self.driver.trainingSetPath = os.path.join(self.trainingSetDir, "TrainingSet.csv")
         self.lapTimePath = os.path.join(self.trainingSetDir, "FastestLap.txt")
