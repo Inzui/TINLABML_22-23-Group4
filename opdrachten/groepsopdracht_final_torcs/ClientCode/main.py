@@ -19,7 +19,7 @@ if __name__ == '__main__':
     argParser = argparse.ArgumentParser()
     argParser.add_argument("-i", "--ipaddress", type = str, help = "Torcs Server IP-Address")
     argParser.add_argument("-p", "--port", type = int, help = "Torcs Server Port")
-    argParser.add_argument("-t", "--training", type = bool, help = "Go into training mode?")
+    argParser.add_argument("-t", "--training", type = bool, help = "Go into training mode (unavailable when using Docker)")
     args = argParser.parse_args()
 
     main(args.ipaddress, args.port, args.training)
