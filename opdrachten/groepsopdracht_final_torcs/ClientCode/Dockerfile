@@ -16,7 +16,7 @@ WORKDIR /opt/app
 ADD requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-RUN git clone https://github.com/Inzui/TINLABML_22-23-Group4.git
+RUN git clone -b DockerReady https://github.com/Inzui/TINLABML_22-23-Group4.git
 EXPOSE 3001 3002 3003 3004 3005 3006 3007 3008 3009 3010
 
 

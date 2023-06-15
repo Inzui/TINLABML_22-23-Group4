@@ -68,11 +68,13 @@ optional arguments:
     -h, --help                            Show this help message and exit
     -i IPADDRESS, --ipaddress IPADDRESS   Torcs Server IP-Address
     -p PORT, --port           PORT        Torcs Server Port
-    -t TRAINING, --training   TRAINING    Go into training mode?
+    -t TRAINING, --training   TRAINING    Go into training mode (unavailable when using Docker)
 ```
 
 ## Training
-Our Torcs Client can be further trained, if wanted by the user. This can be done by using the 'Training' optional argument (See: [Arguments](#Arguments)). The Client will then boot in Training Mode. In Training Mode, the Client will try to speed up Torcs just after every race start. To accomplish this, the Client will simulate keyboard strokes. To make this work, the currently active window has to be the Torcs game.
+**Unavailable when using Docker!**
+
+The Torcs Client can be further trained, if wanted by the user. This can be done by using the 'Training' optional argument (See: [Arguments](#Arguments)). The Client will then boot in Training Mode. In Training Mode, the Client will try to speed up Torcs just after every race start. To accomplish this, the Client will simulate keyboard strokes. To make this work, the currently active window has to be the Torcs game.
 
 ### Training Summary
 The car drives 1 lap each time, for this lap the model is trained with existing training data, only noise is added to all sensor data. Then the car will drive a lap and this lap time is saved. If the lap time is faster than the last fastest lap time, this time is overwritten and the training data is also overwritten. If the car was slower, nothing happens and the simulation is restarted. The simulation is also restarted if the car is off the track for more than 10 seconds. Thus, while the car can be faster by, for example, driving a small distance off the track, we avoid waiting unnecessarily long for a car that has crashed.
