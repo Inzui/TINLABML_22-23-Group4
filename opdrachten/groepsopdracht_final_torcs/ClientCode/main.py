@@ -5,7 +5,7 @@ from Drivers.driverPid import DriverPid
 
 def main(ipaddress: str, port: int, training: bool):
     if (ipaddress == None):
-        ipaddress = "localhost"
+        ipaddress = "192.168.56.20"
     if (port == None):
         port = 3001
     if (training == None):
