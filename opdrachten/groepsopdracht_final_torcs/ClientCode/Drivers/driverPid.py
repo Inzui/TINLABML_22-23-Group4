@@ -11,7 +11,7 @@ class DriverPid(DriverInterface):
         self.finishAccelerationTime = finishAccelerationTime
         self.currGear = 1
 
-        self.steering_ctrl = CompositeController(
+        self.steeringCtrl = CompositeController(
             ProportionalController(0.4),
             IntegrationController(0.2, integral_limit = 1.5),
             DerivativeController(2)
@@ -47,9 +47,9 @@ class DriverPid(DriverInterface):
         self._steer(trackPosition, curLapTime, command)
         return command
     
-    def _steer(self, trackPosition, curLapTime, command):
+    def _steer(self, trackPosition: float, curLapTime: float, command: CommandDto):
         steering_error = -trackPosition
-        command.steering = self.steering_ctrl.control(
+        command.steering = self.steeringCtrl.control(
             steering_error,
             curLapTime
         )

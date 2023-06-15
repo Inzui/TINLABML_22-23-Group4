@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 
 class Supervisor():
-    def __init__(self, driver: DriverInterface, training = False):
+    def __init__(self, driver: DriverInterface, training: bool = False):
         self.training = training
         self.driver = driver
         self.driver.start()
