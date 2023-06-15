@@ -15,7 +15,7 @@ TO_SOCKET_SEC = 1
 TO_SOCKET_MSEC = TO_SOCKET_SEC * 1000
 
 class TorcsClient:
-    def __init__(self, driver: DriverInterface, hostname: str = "localhost", port: int = 3001, speedUp: bool = True, maxImprovements: int = 10):
+    def __init__(self, driver: DriverInterface, hostname: str = "localhost", port: int = 3001, training: bool = False, speedUp: bool = True, maxImprovements: int = 10):
         self.speedup = speedUp
         self.maxImprovements = maxImprovements
 
