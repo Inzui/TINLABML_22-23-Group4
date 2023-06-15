@@ -10,7 +10,7 @@ def main(ipaddress: str, port: int, training: bool):
         port = 3001
     if (training == None):
         training = False
-        
+
     # client = TorcsClient(DriverPid(maxGear = 4, maxCornerSpeed = 50, brakingDistance = 90, finishAccelerationTime = 3), training = False, speedUp = False)
     client = TorcsClient(DriverRegression(), training = training, hostname = ipaddress, port = port)
     client.run()
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     argParser = argparse.ArgumentParser()
     argParser.add_argument("-i", "--ipaddress", type = str, help = "Torcs Server IP-Address")
     argParser.add_argument("-p", "--port", type = int, help = "Torcs Server Port")
-    argParser.add_argument("-t", "--training", type = bool, action = argparse.BooleanOptionalAction, help = "Go into training mode?")
+    argParser.add_argument("-t", "--training", type = bool, help = "Go into training mode?")
     args = argParser.parse_args()
 
     main(args.ipaddress, args.port, args.training)
