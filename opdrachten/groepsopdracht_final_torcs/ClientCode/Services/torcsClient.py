@@ -23,7 +23,7 @@ TO_SOCKET_SEC = 1
 TO_SOCKET_MSEC = TO_SOCKET_SEC * 1000
 
 class TorcsClient:
-    def __init__(self, driver: DriverInterface, hostname: str = "localhost", port: int = 3001, training: bool = False, speedUp: bool = True, maxImprovements: int = 10):
+    def __init__(self, driver: DriverInterface, hostname: str = "localhost", port: int = 3004, training: bool = False, speedUp: bool = True, maxImprovements: int = 10):
         self.training = training
         self.logPath = "/home/vagrant/Documents/Logs"
         if (self.training):
