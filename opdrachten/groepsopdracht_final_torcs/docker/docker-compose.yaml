@@ -1,0 +1,12 @@
+version: '3.3'
+
+services:
+
+  agent4:
+    image: agent:22234
+    restart: always
+    # Port mapping from host to container
+    ports:
+      - '3004:3004'
+    expose:
+      - '3004'

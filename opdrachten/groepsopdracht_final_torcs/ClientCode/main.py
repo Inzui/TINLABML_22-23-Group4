@@ -7,7 +7,7 @@ def main(ipaddress: str, port: int, training: bool):
     if (ipaddress == None):
         ipaddress = "192.168.56.20"
     if (port == None):
-        port = 3001
+        port = 3004
     if (training == None):
         training = False
 
